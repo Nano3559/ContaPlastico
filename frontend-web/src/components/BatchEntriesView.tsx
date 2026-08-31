@@ -36,6 +36,7 @@ export const BatchEntriesView: React.FC = () => {
     supplierName: 'Petroquímica del Sur S.A.',
     supplierBatch: 'LOTE-BRK-2026-88',
     quantityKg: 5000,
+    unitPricePerKg: 1.85,
     invoiceNumber: 'FAC-2026-9021',
     siloDestination: 'Silo A-01',
     qualityCertificatePassed: true,
@@ -52,10 +53,12 @@ export const BatchEntriesView: React.FC = () => {
     setEntries(entriesRes.data);
     setMaterials(matRes.data);
     if (matRes.data.length > 0 && !formState.materialId) {
+      const firstMat = matRes.data[0];
       setFormState(prev => ({
         ...prev,
-        materialId: matRes.data[0].id,
-        siloDestination: matRes.data[0].siloLocation
+        materialId: firstMat.id,
+        siloDestination: firstMat.siloLocation,
+        unitPricePerKg: firstMat.costPerKg || 1.85
       }));
     }
     setIsLoading(false);
@@ -68,12 +71,15 @@ export const BatchEntriesView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetMat = materials.find(m => m.id === formState.materialId);
+    const totalCost = Number(formState.quantityKg) * Number(formState.unitPricePerKg);
     const created = await entriesApi.create({
       materialId: formState.materialId,
       materialName: targetMat?.name || 'Polímero',
       supplierName: formState.supplierName,
       supplierBatch: formState.supplierBatch,
       quantityKg: Number(formState.quantityKg),
+      unitPricePerKg: Number(formState.unitPricePerKg),
+      totalCostUsd: totalCost,
       invoiceNumber: formState.invoiceNumber,
       siloDestination: formState.siloDestination,
       qualityCertificatePassed: formState.qualityCertificatePassed,
@@ -85,7 +91,7 @@ export const BatchEntriesView: React.FC = () => {
     if (created?.data) {
       showToast(
         'Entrada Registrada en Báscula',
-        `Lote ${created.data.entryCode} ingresado a ${created.data.siloDestination} (+${created.data.quantityKg.toLocaleString()} kg).`,
+        `Lote ${created.data.entryCode} ingresado a ${created.data.siloDestination} (+${created.data.quantityKg.toLocaleString()} kg | $${totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })} USD).`,
         'success'
       );
       setSelectedQrEntry(created.data);
@@ -193,43 +199,50 @@ export const BatchEntriesView: React.FC = () => {
               <th className="py-3.5 px-4">Materia Prima & Silo</th>
               <th className="py-3.5 px-4">Proveedor & Lote Petroquímica</th>
               <th className="py-3.5 px-4">Factura / Guía</th>
-              <th className="py-3.5 px-4 text-right">Peso Neto (kg)</th>
+              <th className="py-3.5 px-4 text-right">Peso Neto & Valor</th>
               <th className="py-3.5 px-4 text-center">Calidad</th>
               <th className="py-3.5 px-4 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {filteredEntries.map((entry) => (
-              <tr key={entry.id} className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-3 px-4">
-                  <div className="font-mono font-bold text-cyan-400">{entry.entryCode}</div>
-                  <div className="text-[10px] text-slate-500">{entry.createdAt}</div>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="font-bold text-white text-sm">{entry.materialName}</div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Destino: {entry.siloDestination}
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="font-medium text-slate-200">{entry.supplierName}</div>
-                  <div className="font-mono text-[10px] text-purple-300">Lote: {entry.supplierBatch}</div>
-                </td>
-                <td className="py-3 px-4 font-mono text-slate-300">
-                  {entry.invoiceNumber}
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <span className="font-extrabold text-emerald-400 text-sm">
-                    +{entry.quantityKg.toLocaleString()} kg
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Conforme
-                  </span>
-                </td>
+            {filteredEntries.map((entry) => {
+              const priceKg = entry.unitPricePerKg || 1.85;
+              const totalCost = entry.totalCostUsd || (entry.quantityKg * priceKg);
+
+              return (
+                <tr key={entry.id} className="hover:bg-slate-800/30 transition-colors">
+                  <td className="py-3 px-4">
+                    <div className="font-mono font-bold text-cyan-400">{entry.entryCode}</div>
+                    <div className="text-[10px] text-slate-500">{entry.createdAt}</div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="font-bold text-white text-sm">{entry.materialName}</div>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      Destino: {entry.siloDestination}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="font-medium text-slate-200">{entry.supplierName}</div>
+                    <div className="font-mono text-[10px] text-purple-300">Lote: {entry.supplierBatch}</div>
+                  </td>
+                  <td className="py-3 px-4 font-mono text-slate-300">
+                    {entry.invoiceNumber}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <span className="font-extrabold text-emerald-400 text-sm block">
+                      +{entry.quantityKg.toLocaleString()} kg
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-400 block">
+                      ${totalCost.toLocaleString('es-MX', { minimumFractionDigits: 2 })} USD (${priceKg.toFixed(2)}/kg)
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Conforme
+                    </span>
+                  </td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex items-center justify-center gap-1.5">
                     <button
@@ -251,7 +264,8 @@ export const BatchEntriesView: React.FC = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>
@@ -401,17 +415,18 @@ export const BatchEntriesView: React.FC = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">Número de Factura / Guía</label>
+                <input
+                  type="text"
+                  required
+                  value={formState.invoiceNumber}
+                  onChange={(e) => setFormState({ ...formState, invoiceNumber: e.target.value })}
+                  className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-700 text-white"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Número de Factura / Guía</label>
-                  <input
-                    type="text"
-                    required
-                    value={formState.invoiceNumber}
-                    onChange={(e) => setFormState({ ...formState, invoiceNumber: e.target.value })}
-                    className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-700 text-white"
-                  />
-                </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">Peso Neto Báscula (kg)</label>
                   <input
@@ -420,6 +435,18 @@ export const BatchEntriesView: React.FC = () => {
                     value={formState.quantityKg}
                     onChange={(e) => setFormState({ ...formState, quantityKg: Number(e.target.value) })}
                     className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-400 mb-1">Precio Unitario ($/kg)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.1"
+                    required
+                    value={formState.unitPricePerKg}
+                    onChange={(e) => setFormState({ ...formState, unitPricePerKg: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-emerald-500/50 text-emerald-300 font-mono font-bold"
                   />
                 </div>
               </div>
@@ -433,6 +460,21 @@ export const BatchEntriesView: React.FC = () => {
                   onChange={(e) => setFormState({ ...formState, siloDestination: e.target.value })}
                   className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-700 text-white"
                 />
+              </div>
+
+              {/* Total Factura Box */}
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Factura / Albarán:</span>
+                  <span className="text-xs text-slate-300">
+                    {formState.quantityKg.toLocaleString()} kg × ${formState.unitPricePerKg.toFixed(2)} /kg
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-base font-extrabold text-emerald-400 font-mono">
+                    ${(formState.quantityKg * formState.unitPricePerKg).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  </span>
+                </div>
               </div>
 
               <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-800/30 flex items-center gap-2">

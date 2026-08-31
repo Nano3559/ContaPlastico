@@ -4,6 +4,8 @@ import { DashboardPrincipal } from './components/DashboardPrincipal';
 import { RawMaterialsView } from './components/RawMaterialsView';
 import { BatchEntriesView } from './components/BatchEntriesView';
 import { ProductionOrdersView } from './components/ProductionOrdersView';
+import { ProductionLinesView } from './components/ProductionLinesView';
+import { MaterialConsumptionView } from './components/MaterialConsumptionView';
 import { ScrapControlView } from './components/ScrapControlView';
 import { SuppliersView } from './components/SuppliersView';
 import { ReportsView } from './components/ReportsView';
@@ -12,19 +14,21 @@ import { RoleSimulator } from './components/RoleSimulator';
 import { InteractiveDemo } from './components/InteractiveDemo';
 import { BackendConnectionModal } from './components/BackendConnectionModal';
 import { NotificationsCenterModal } from './components/NotificationsCenterModal';
+import { LoginView } from './components/LoginView';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { mockUsers } from './data/mockData';
-import { apiConfig } from './services/api';
+import { apiConfig, authApi } from './services/api';
 import type { UserProfile } from './types';
-import { Menu, X, Shield, Activity, RefreshCw, Bell, Server } from 'lucide-react';
+import { Menu, X, Shield, Activity, RefreshCw, Bell, Server, LogOut } from 'lucide-react';
 
 function AppContent() {
-  const { notificationsHistory } = useToast();
+  const { showToast, notificationsHistory } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState<boolean>(false);
   const [isBackendModalOpen, setIsBackendModalOpen] = useState<boolean>(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<UserProfile>(mockUsers[0]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => !!authApi.getStoredUser());
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => authApi.getStoredUser() || mockUsers[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isApiOnline, setIsApiOnline] = useState<boolean>(false);
   const [isCheckingApi, setIsCheckingApi] = useState<boolean>(false);
@@ -42,6 +46,25 @@ function AppContent() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleLogout = () => {
+    authApi.logout();
+    setIsAuthenticated(false);
+    showToast('Sesión Cerrada', 'Has salido del sistema PlastControl.', 'info');
+  };
+
+  // Si el usuario no ha iniciado sesión, mostrar pantalla de Login
+  if (!isAuthenticated) {
+    return (
+      <LoginView
+        isApiOnline={isApiOnline}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex">
       
@@ -52,6 +75,7 @@ function AppContent() {
           setActiveSection={setActiveSection}
           currentUser={currentUser}
           onOpenRoleModal={() => setIsRoleModalOpen(true)}
+          onLogout={handleLogout}
         />
       </div>
 
@@ -83,6 +107,10 @@ function AppContent() {
                 setIsRoleModalOpen(true);
                 setIsMobileMenuOpen(false);
               }}
+              onLogout={() => {
+                handleLogout();
+                setIsMobileMenuOpen(false);
+              }}
             />
           </div>
         </div>
@@ -110,7 +138,7 @@ function AppContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             
             {/* Backend API Connection Status Button */}
             <button
@@ -124,7 +152,7 @@ function AppContent() {
             >
               <Activity className={`w-3.5 h-3.5 ${isApiOnline ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
               <span className="hidden sm:inline">
-                {isApiOnline ? 'API REST: Live :3000' : 'API: Modo Mock'}
+                {isApiOnline ? 'API REST: Live' : 'API: Modo Mock'}
               </span>
               <RefreshCw className={`w-2.5 h-2.5 ml-0.5 ${isCheckingApi ? 'animate-spin' : 'opacity-60'}`} />
             </button>
@@ -143,18 +171,23 @@ function AppContent() {
               )}
             </button>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span>Persona 2 (Web)</span>
-            </div>
-
             <button
               onClick={() => setIsRoleModalOpen(true)}
+              title="Cambiar Rol de Usuario"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-bold transition-all"
             >
               <Shield className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Rol:</span>
               <span>{currentUser.role}</span>
+            </button>
+
+            {/* Cerrar Sesión Button */}
+            <button
+              onClick={handleLogout}
+              title="Cerrar Sesión"
+              className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </header>
@@ -177,8 +210,19 @@ function AppContent() {
             <BatchEntriesView />
           )}
 
-          {(activeSection === 'salidas' || activeSection === 'produccion' || activeSection === 'ordenes' || activeSection === 'consumo') && (
+          {/* Módulo 10: Producción & Monitoreo de Líneas */}
+          {activeSection === 'produccion' && (
+            <ProductionLinesView />
+          )}
+
+          {/* Módulo 11: Órdenes de Producción & Solicitudes */}
+          {(activeSection === 'ordenes' || activeSection === 'salidas') && (
             <ProductionOrdersView />
+          )}
+
+          {/* Módulo 12: Consumo de Material en Tolvas */}
+          {activeSection === 'consumo' && (
+            <MaterialConsumptionView />
           )}
 
           {activeSection === 'merma' && (

@@ -17,7 +17,8 @@ import {
   Users,
   Settings,
   Shield,
-  Layers
+  Layers,
+  LogOut
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 
@@ -26,13 +27,15 @@ interface SidebarProps {
   setActiveSection: (section: string) => void;
   currentUser: UserProfile;
   onOpenRoleModal: () => void;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeSection,
   setActiveSection,
   currentUser,
-  onOpenRoleModal
+  onOpenRoleModal,
+  onLogout
 }) => {
   const menuItems = [
     { id: 'dashboard', label: '2. Dashboard Principal', icon: LayoutDashboard, badge: 'Punto 3' },
@@ -125,6 +128,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           );
         })}
+        {onLogout && (
+          <div className="pt-2">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Footer Info */}

@@ -14,6 +14,7 @@ export interface RawMaterial {
   currentStockKg: number;
   minStockKg: number;
   maxCapacityKg: number;
+  costPerKg?: number; // Precio de compra USD/kg
   siloLocation: string;
   status: StockStatus;
   colorCode: string;
@@ -29,6 +30,8 @@ export interface BatchEntry {
   supplierName: string;
   supplierBatch: string;
   quantityKg: number;
+  unitPricePerKg?: number; // Precio de compra por kg en factura
+  totalCostUsd?: number; // Costo total del lote (USD)
   invoiceNumber: string;
   siloDestination: string;
   qualityCertificatePassed: boolean;

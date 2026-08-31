@@ -27,7 +27,19 @@ import type {
   UserRole
 } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+const getApiBaseUrl = () => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl) return envUrl;
+  
+  if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) return 'http://localhost:3000/api';
+  }
+  
+  return 'https://contaplastico-backend.onrender.com/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const normalizeDate = (value?: string) => {
   if (!value) return 'Reciente';
@@ -369,6 +381,8 @@ export interface CreateBatchEntryDto {
   supplierName?: string;
   supplierBatch: string;
   quantityKg: number;
+  unitPricePerKg?: number;
+  totalCostUsd?: number;
   invoiceNumber: string;
   siloDestination: string;
   qualityCertificatePassed?: boolean;
@@ -398,9 +412,10 @@ export const entriesApi = {
         method: 'POST',
         body: JSON.stringify({
           materialId: dto.materialId,
-          supplierId: dto.supplierId,
+          supplierId: (dto as any).supplierId,
           supplierBatchNumber: dto.supplierBatch,
           quantityKg: dto.quantityKg,
+          unitPricePerKg: dto.unitPricePerKg,
           invoiceNumber: dto.invoiceNumber,
           siloOrWarehouseLocation: dto.siloDestination,
           qualityCertificate: dto.qualityCertificatePassed ?? true,
@@ -409,6 +424,7 @@ export const entriesApi = {
       },
       () => {
         const targetMat = mockMaterials.find(m => m.id === dto.materialId);
+        const priceKg = dto.unitPricePerKg || targetMat?.costPerKg || 1.85;
         const newEntry: BatchEntry = {
           id: `ent-${Date.now()}`,
           entryCode: `ENT-2026-${Math.floor(100 + Math.random() * 900)}`,
@@ -417,6 +433,8 @@ export const entriesApi = {
           supplierName: dto.supplierName || targetMat?.supplier || 'Proveedor Petroquímico',
           supplierBatch: dto.supplierBatch,
           quantityKg: dto.quantityKg,
+          unitPricePerKg: priceKg,
+          totalCostUsd: dto.totalCostUsd || (dto.quantityKg * priceKg),
           invoiceNumber: dto.invoiceNumber,
           siloDestination: dto.siloDestination || targetMat?.siloLocation || 'Silo 1',
           qualityCertificatePassed: dto.qualityCertificatePassed ?? true,

@@ -11,12 +11,16 @@ import {
   CheckCircle2,
   Sparkles,
   TrendingUp,
-  Boxes
+  Boxes,
+  DollarSign,
+  Coins
 } from 'lucide-react';
 import { rawMaterialsApi } from '../services/api';
 import type { RawMaterial, MaterialType, ProcessCategory, StockStatus } from '../types';
+import { useToast } from '../context/ToastContext';
 
 export const RawMaterialsView: React.FC = () => {
+  const { showToast } = useToast();
   const [materials, setMaterials] = useState<RawMaterial[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -25,7 +29,7 @@ export const RawMaterialsView: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [selectedMaterial, setSelectedMaterial] = useState<RawMaterial | null>(null);
 
-  // Form State para nueva materia prima
+  // Form State para nueva materia prima con precio de compra
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -37,6 +41,7 @@ export const RawMaterialsView: React.FC = () => {
     currentStockKg: 5000,
     minStockKg: 2000,
     maxCapacityKg: 15000,
+    costPerKg: 1.85,
     siloLocation: 'Silo A-03',
     supplier: 'Petroquímica del Golfo',
     colorCode: '#06b6d4'
@@ -56,6 +61,11 @@ export const RawMaterialsView: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     await rawMaterialsApi.create(formData);
+    showToast(
+      'Materia Prima Registrada',
+      `${formData.name} creada con costo base de $${formData.costPerKg.toFixed(2)} USD/kg.`,
+      'success'
+    );
     setShowCreateModal(false);
     loadMaterials();
   };
@@ -74,6 +84,7 @@ export const RawMaterialsView: React.FC = () => {
   });
 
   const totalStock = materials.reduce((acc, m) => acc + m.currentStockKg, 0);
+  const totalValuationUsd = materials.reduce((acc, m) => acc + (m.currentStockKg * (m.costPerKg || 1.80)), 0);
   const criticalCount = materials.filter(m => m.status === 'CRITICO').length;
   const lowCount = materials.filter(m => m.status === 'BAJO').length;
 
@@ -86,13 +97,13 @@ export const RawMaterialsView: React.FC = () => {
             <span className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
               <Boxes className="w-4 h-4" />
             </span>
-            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Catálogo & Silos</span>
+            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Catálogo, Silos & Precios</span>
           </div>
           <h2 className="text-2xl font-extrabold text-white font-outfit">
-            Materias Primas & Silos de Polímeros
+            Materias Primas, Silos & Valuación de Inventario
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Control de inventario, densidades y fluidéz (MFI) de resinas vírgenes (HDPE, PP, LDPE), masterbatch, aditivos y material recuperado.
+            Control de inventario físico, precios de compra petroquímica ($/kg), densidades y fluidéz (MFI).
           </p>
         </div>
 
@@ -107,7 +118,7 @@ export const RawMaterialsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Mini KPI Cards */}
+      {/* Mini KPI Cards con Valorización Financiera */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
           <div>
@@ -120,16 +131,17 @@ export const RawMaterialsView: React.FC = () => {
           </div>
         </div>
 
+        {/* KPI Financiero: Valor Total del Inventario */}
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-slate-400">Estado Óptimo</span>
-            <div className="text-xl font-extrabold text-emerald-400 mt-0.5">
-              {materials.filter(m => m.status === 'OPTIMO').length} Silos
+            <span className="text-[11px] font-semibold text-slate-400">Valor Total en Silos</span>
+            <div className="text-xl font-extrabold text-emerald-400 mt-0.5 font-mono">
+              ${totalValuationUsd.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <span className="text-[10px] text-emerald-400/80 font-medium">Abastecimiento suficiente</span>
+            <span className="text-[10px] text-emerald-400/80 font-medium">Valuación USD en planta</span>
           </div>
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
+            <Coins className="w-5 h-5" />
           </div>
         </div>
 
@@ -263,6 +275,22 @@ export const RawMaterialsView: React.FC = () => {
                   <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800/60">
                     <span className="block text-slate-500">Densidad:</span>
                     <span className="font-mono font-bold text-slate-200">{mat.density} g/cm³</span>
+                  </div>
+                </div>
+
+                {/* Precios & Valuación Financiera del Silo */}
+                <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/20 flex items-center justify-between">
+                  <div>
+                    <span className="text-[9px] font-bold text-slate-500 uppercase block">Precio Compra:</span>
+                    <span className="font-mono font-black text-cyan-400 text-xs">
+                      ${(mat.costPerKg || 1.85).toFixed(2)} /kg
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase block">Valor en Silo:</span>
+                    <span className="font-mono font-black text-emerald-400 text-xs">
+                      ${(mat.currentStockKg * (mat.costPerKg || 1.85)).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -494,7 +522,7 @@ export const RawMaterialsView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">Ubicación / Silo</label>
                   <input
@@ -515,6 +543,19 @@ export const RawMaterialsView: React.FC = () => {
                     value={formData.supplier}
                     onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                     className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-slate-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-400 mb-1">Precio Compra ($/kg)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.1"
+                    required
+                    placeholder="1.85"
+                    value={formData.costPerKg}
+                    onChange={(e) => setFormData({ ...formData, costPerKg: Number(e.target.value) })}
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-slate-950 border border-emerald-500/50 text-emerald-300 font-mono font-bold"
                   />
                 </div>
               </div>

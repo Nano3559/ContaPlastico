@@ -234,21 +234,29 @@ export const LotQrLabelModal: React.FC<LotQrLabelModalProps> = ({ entry, onClose
               </div>
             </div>
 
-            {/* Banner de Peso y Calidad */}
-            <div className="mt-4 pt-3 border-t-2 border-slate-900 grid grid-cols-2 gap-3 items-center">
-              <div className="p-2.5 bg-slate-100 rounded-lg border border-slate-300">
-                <div className="text-[9px] font-black text-slate-600 uppercase tracking-wider">PESO NETO RECIBIDO:</div>
-                <div className="text-xl font-black text-slate-950 font-mono tracking-tight">
-                  {entry.quantityKg.toLocaleString('es-MX', { minimumFractionDigits: 2 })} KG
+            {/* Banner de Peso, Valor y Calidad */}
+            <div className="mt-4 pt-3 border-t-2 border-slate-900 grid grid-cols-3 gap-2 items-center">
+              <div className="p-2 bg-slate-100 rounded-lg border border-slate-300">
+                <div className="text-[8px] font-black text-slate-600 uppercase tracking-wider">PESO NETO:</div>
+                <div className="text-base font-black text-slate-950 font-mono tracking-tight">
+                  {entry.quantityKg.toLocaleString('es-MX', { minimumFractionDigits: 1 })} KG
                 </div>
               </div>
 
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-300 text-center">
-                <div className="flex items-center justify-center gap-1 text-emerald-800 font-black text-xs">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>CALIDAD CONFORME (MFI OK)</span>
+              <div className="p-2 bg-slate-100 rounded-lg border border-slate-300">
+                <div className="text-[8px] font-black text-slate-600 uppercase tracking-wider">VALOR TOTAL LOTE:</div>
+                <div className="text-sm font-black text-emerald-800 font-mono tracking-tight">
+                  ${(entry.totalCostUsd || (entry.quantityKg * (entry.unitPricePerKg || 1.85))).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                 </div>
-                <div className="text-[9px] text-emerald-700 font-semibold mt-0.5">Certificado de análisis aprobado</div>
+                <div className="text-[8px] text-slate-500 font-mono">${(entry.unitPricePerKg || 1.85).toFixed(2)}/kg</div>
+              </div>
+
+              <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-300 text-center">
+                <div className="flex items-center justify-center gap-1 text-emerald-800 font-black text-[10px]">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>CALIDAD OK</span>
+                </div>
+                <div className="text-[8px] text-emerald-700 font-semibold mt-0.5">Certificado Conforme</div>
               </div>
             </div>
 
