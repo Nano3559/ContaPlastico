@@ -10,14 +10,20 @@ import { ReportsView } from './components/ReportsView';
 import { UsersConfigView } from './components/UsersConfigView';
 import { RoleSimulator } from './components/RoleSimulator';
 import { InteractiveDemo } from './components/InteractiveDemo';
+import { BackendConnectionModal } from './components/BackendConnectionModal';
+import { NotificationsCenterModal } from './components/NotificationsCenterModal';
+import { ToastProvider, useToast } from './context/ToastContext';
 import { mockUsers } from './data/mockData';
 import { apiConfig } from './services/api';
 import type { UserProfile } from './types';
-import { Menu, X, Shield, Activity, RefreshCw } from 'lucide-react';
+import { Menu, X, Shield, Activity, RefreshCw, Bell, Server } from 'lucide-react';
 
-export function App() {
+function AppContent() {
+  const { notificationsHistory } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState<boolean>(false);
+  const [isBackendModalOpen, setIsBackendModalOpen] = useState<boolean>(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(mockUsers[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isApiOnline, setIsApiOnline] = useState<boolean>(false);
@@ -32,7 +38,7 @@ export function App() {
 
   useEffect(() => {
     checkBackendStatus();
-    const interval = setInterval(checkBackendStatus, 15000); // Check cada 15 segs
+    const interval = setInterval(checkBackendStatus, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -105,21 +111,36 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* API Status Badge */}
+            
+            {/* Backend API Connection Status Button */}
             <button
-              onClick={checkBackendStatus}
-              title={`API Backend NestJS: ${isApiOnline ? 'En Vivo (Conectado :3000)' : 'Modo Mock / Offline'}. Clic para verificar.`}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+              onClick={() => setIsBackendModalOpen(true)}
+              title={`API Backend NestJS: ${isApiOnline ? 'En Vivo (Conectado :3000)' : 'Modo Mock / Offline'}. Clic para gestionar.`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
                 isApiOnline
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 shadow-sm shadow-emerald-500/10'
                   : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
               }`}
             >
-              <Activity className={`w-3 h-3 ${isApiOnline ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
-              <span className="hidden sm:inline font-bold">
+              <Activity className={`w-3.5 h-3.5 ${isApiOnline ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
+              <span className="hidden sm:inline">
                 {isApiOnline ? 'API REST: Live :3000' : 'API: Modo Mock'}
               </span>
               <RefreshCw className={`w-2.5 h-2.5 ml-0.5 ${isCheckingApi ? 'animate-spin' : 'opacity-60'}`} />
+            </button>
+
+            {/* Notifications Bell */}
+            <button
+              onClick={() => setIsNotificationsModalOpen(true)}
+              title="Centro de Notificaciones & Eventos"
+              className="relative p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+              {notificationsHistory.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-500 text-slate-950 font-black text-[9px] flex items-center justify-center animate-pulse">
+                  {notificationsHistory.length}
+                </span>
+              )}
             </button>
 
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
@@ -191,7 +212,29 @@ export function App() {
         setCurrentUser={setCurrentUser}
       />
 
+      {/* Backend Connection Diagnostics Modal */}
+      <BackendConnectionModal
+        isOpen={isBackendModalOpen}
+        onClose={() => setIsBackendModalOpen(false)}
+        isApiOnline={isApiOnline}
+        onStatusChanged={(online) => setIsApiOnline(online)}
+      />
+
+      {/* Notifications Center Modal */}
+      <NotificationsCenterModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+      />
+
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 

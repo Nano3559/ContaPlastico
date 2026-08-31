@@ -59,3 +59,17 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Reglas de Impresión Limpia (Etiquetas & Tickets) */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Ocultar elementos generales de navegación y fondo */
+  nav, aside, header, footer, .no-print {
+    display: none !important;
+  }
+}
+

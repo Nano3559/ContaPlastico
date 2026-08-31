@@ -8,12 +8,15 @@ import {
   X, 
   Layers, 
   Scale, 
-  AlertCircle,
-  FileCheck,
-  Send
+  AlertCircle, 
+  FileCheck, 
+  Send,
+  FlaskConical,
+  Sparkles
 } from 'lucide-react';
 import { productionRequestsApi, rawMaterialsApi } from '../services/api';
 import type { ProductionRequest, RawMaterial, ProcessCategory } from '../types';
+import { BomRecipeCalculatorModal } from './BomRecipeCalculatorModal';
 
 export const ProductionOrdersView: React.FC = () => {
   const [requests, setRequests] = useState<ProductionRequest[]>([]);
@@ -21,6 +24,7 @@ export const ProductionOrdersView: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showBomModal, setShowBomModal] = useState<boolean>(false);
 
   // Form State
   const [formState, setFormState] = useState({
@@ -102,11 +106,19 @@ export const ProductionOrdersView: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setShowBomModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold text-xs shadow-lg transition-all"
+          >
+            <FlaskConical className="w-4 h-4 text-purple-400" />
+            <span>Formulador BOM (Recetas)</span>
+          </button>
+
+          <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs shadow-lg shadow-purple-500/20 transition-all"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Nueva Solicitud de Material</span>
+            <span>Nueva Solicitud Rápida</span>
           </button>
         </div>
       </div>
@@ -302,6 +314,18 @@ export const ProductionOrdersView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal: Formulador de Recetas BOM */}
+      {showBomModal && (
+        <BomRecipeCalculatorModal
+          materials={materials}
+          onClose={() => setShowBomModal(false)}
+          onOrderCreated={() => {
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 };
+

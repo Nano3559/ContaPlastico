@@ -12,18 +12,23 @@ import {
   Calendar,
   Layers,
   Building2,
-  FileText
+  FileText,
+  QrCode
 } from 'lucide-react';
 import { entriesApi, rawMaterialsApi } from '../services/api';
 import type { BatchEntry, RawMaterial } from '../types';
+import { LotQrLabelModal } from './LotQrLabelModal';
+import { useToast } from '../context/ToastContext';
 
 export const BatchEntriesView: React.FC = () => {
+  const { showToast } = useToast();
   const [entries, setEntries] = useState<BatchEntry[]>([]);
   const [materials, setMaterials] = useState<RawMaterial[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedTicket, setSelectedTicket] = useState<BatchEntry | null>(null);
+  const [selectedQrEntry, setSelectedQrEntry] = useState<BatchEntry | null>(null);
 
   // Form State
   const [formState, setFormState] = useState({
@@ -63,7 +68,7 @@ export const BatchEntriesView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetMat = materials.find(m => m.id === formState.materialId);
-    await entriesApi.create({
+    const created = await entriesApi.create({
       materialId: formState.materialId,
       materialName: targetMat?.name || 'Polímero',
       supplierName: formState.supplierName,
@@ -76,7 +81,15 @@ export const BatchEntriesView: React.FC = () => {
       receivedBy: formState.receivedBy
     });
     setShowModal(false);
-    loadData();
+    await loadData();
+    if (created?.data) {
+      showToast(
+        'Entrada Registrada en Báscula',
+        `Lote ${created.data.entryCode} ingresado a ${created.data.siloDestination} (+${created.data.quantityKg.toLocaleString()} kg).`,
+        'success'
+      );
+      setSelectedQrEntry(created.data);
+    }
   };
 
   const filteredEntries = entries.filter(e => 
@@ -218,19 +231,38 @@ export const BatchEntriesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3 px-4 text-center">
-                  <button
-                    onClick={() => setSelectedTicket(entry)}
-                    className="px-3 py-1 text-[11px] font-bold text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg transition-colors inline-flex items-center gap-1"
-                  >
-                    <FileText className="w-3 h-3" />
-                    <span>Ticket</span>
-                  </button>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <button
+                      onClick={() => setSelectedQrEntry(entry)}
+                      title="Ver e Imprimir Etiqueta con Código QR"
+                      className="px-2.5 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors inline-flex items-center gap-1 shadow-sm"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Etiqueta QR</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedTicket(entry)}
+                      title="Ver Ticket de Báscula"
+                      className="px-2.5 py-1 text-[11px] font-bold text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-lg transition-colors inline-flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Ticket</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Modal: Etiqueta Industrial QR */}
+      {selectedQrEntry && (
+        <LotQrLabelModal
+          entry={selectedQrEntry}
+          onClose={() => setSelectedQrEntry(null)}
+        />
+      )}
 
       {/* Modal: Ticket de Báscula Imprimible */}
       {selectedTicket && (
