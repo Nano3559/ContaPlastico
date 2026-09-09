@@ -1,5 +1,22 @@
-# Logs
-logs
+# ==============================================================================
+# 🏭 PlastControl - Monorepo .gitignore (Nivel Profesional)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Dependencias de Node.js y Gestores de Paquetes
+# ------------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ------------------------------------------------------------------------------
+# 2. Logs y Depuración
+# ------------------------------------------------------------------------------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,50 +24,117 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Node dependencies
-node_modules
-dist
-dist-ssr
-*.local
-
-# Environment variables
+# ------------------------------------------------------------------------------
+# 3. Variables de Entorno y Secretos (Seguridad Estricta)
+# ------------------------------------------------------------------------------
 .env
-.env.local
+.env*.local
 .env.development.local
 .env.test.local
 .env.production.local
+*.pem
+*.key
+*.cert
+*.crt
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Excepciones: Permitir siempre archivos de plantilla .env.example
+!.env.example
+!backend/.env.example
+!frontend-web/.env.example
+!mobile-app/.env.example
 
-# Build outputs
-frontend-web/dist
-backend/dist
-mobile-app/.expo
-mobile-app/web-build
+# ------------------------------------------------------------------------------
+# 4. Artefactos de Compilación y Salidas de Build
+# ------------------------------------------------------------------------------
+dist/
+dist-ssr/
+build/
+out/
+.turbo/
+.cache/
+*.tsbuildinfo
 
-# Expo / React Native
+# Módulos específicos
+backend/dist/
+frontend-web/dist/
+mobile-app/web-build/
+mobile-app/dist/
+
+# ------------------------------------------------------------------------------
+# 5. Vite & Frontend Web
+# ------------------------------------------------------------------------------
+.vite/
+
+# ------------------------------------------------------------------------------
+# 6. React Native / Expo Mobile
+# ------------------------------------------------------------------------------
 .expo/
 .expo-shared/
 *.jks
 *.p8
 *.p12
 *.key
+*.keystore
 *.mobileprovision
 *.orig.*
 
-# Prisma
+# Android & iOS nativo generado por prebuild (Expo)
+mobile-app/android/
+mobile-app/ios/
+*.apk
+*.aab
+*.ipa
+
+# ------------------------------------------------------------------------------
+# 7. Bases de Datos y Prisma ORM
+# ------------------------------------------------------------------------------
 backend/prisma/*.db
 backend/prisma/*.db-journal
+backend/prisma/*.sqlite
+backend/prisma/*.sqlite-journal
+*.sqlite3
+*.dump
+*.sql.gz
 
-# Temporary files
-.temp
-tmp
+# ------------------------------------------------------------------------------
+# 8. Reportes de Pruebas y Cobertura
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# 9. Editores e IDEs
+# ------------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# 10. Archivos del Sistema Operativo
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ------------------------------------------------------------------------------
+# 11. Archivos Temporales y Scratch
+# ------------------------------------------------------------------------------
+.temp/
+tmp/
+scratch/
+*.bak
+*.tmp
