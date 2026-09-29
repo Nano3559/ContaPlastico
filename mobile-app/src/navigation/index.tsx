@@ -27,6 +27,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import EntryScreen from '../screens/EntryScreen';
 import RequestsScreen from '../screens/RequestsScreen';
 import MovementsScreen from '../screens/MovementsScreen';
+import SafetyCheckpointScreen from '../screens/SafetyCheckpointScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
@@ -155,6 +156,17 @@ export function AppNavigator() {
                 headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
                 headerTintColor: colors.primary,
                 title: 'Solicitudes de Producción',
+              }}
+            />
+            <RootStack.Screen
+              name="SafetyCheckpoint"
+              component={SafetyCheckpointScreen}
+              options={{
+                headerShown: true,
+                headerStyle: { backgroundColor: colors.surface },
+                headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
+                headerTintColor: colors.primary,
+                title: 'Checkpoint EPP (IA)',
               }}
             />
           </>

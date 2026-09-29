@@ -144,3 +144,60 @@
 
 - `GET /api/reports/monthly-balance?month=8&year=2026&format=excel`
 - `GET /api/reports/scrap-analysis?format=pdf`
+
+---
+
+## 🛡️ 8. Visión Artificial y Verificación de EPP (`/api/vision`)
+
+### `POST /api/vision/verify-epp`
+- **Roles**: `ADMIN`, `ALMACEN`, `PRODUCCION`, `SUPERVISOR`
+- **Descripción**: Evalúa en tiempo real si el operario porta los implementos obligatorios de seguridad (Casco, Lentes, Chaleco) mediante el modelo de visión YOLOv8/Roboflow antes de autorizar el acceso al sistema de almacén.
+- **Body**:
+  ```json
+  {
+    "imageBase64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+    "imageUrl": "https://ejemplo.com/operario.jpg" // Opcional para pruebas
+  }
+  ```
+- **Response `200 OK` (Acceso Autorizado)**:
+  ```json
+  {
+    "accessGranted": true,
+    "status": {
+      "helmet": true,
+      "goggles": true,
+      "vest": true
+    },
+    "missing": [],
+    "detected": ["Casco", "Lentes", "Chaleco"],
+    "confidenceSummary": {
+      "helmet": 88,
+      "goggles": 79,
+      "vest": 92
+    },
+    "detections": [
+      {
+        "label": "helmet",
+        "confidence": 88,
+        "box": { "x": 320, "y": 110, "width": 140, "height": 90 }
+      }
+    ],
+    "timestamp": "2026-09-29T15:00:00.000Z",
+    "message": "Acceso Autorizado: El operario cumple con todos los implementos de seguridad requeridos (EPP)."
+  }
+  ```
+- **Response `200 OK` (Acceso Bloqueado / Falta EPP)**:
+  ```json
+  {
+    "accessGranted": false,
+    "status": {
+      "helmet": true,
+      "goggles": false,
+      "vest": true
+    },
+    "missing": ["Lentes / Gafas de protección"],
+    "detected": ["Casco", "Chaleco"],
+    "message": "Acceso Denegado: Faltan implementos de protección obligatorios: Lentes / Gafas de protección."
+  }
+  ```
+

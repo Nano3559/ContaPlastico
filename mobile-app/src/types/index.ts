@@ -167,8 +167,41 @@ export interface MovementFilters {
   materialId?: string;
 }
 
+export interface EppStatus {
+  helmet: boolean;
+  goggles: boolean;
+  vest: boolean;
+}
+
+export interface EppDetectionItem {
+  label: string;
+  confidence: number;
+  box: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
+export interface VerifyEppResult {
+  accessGranted: boolean;
+  status: EppStatus;
+  missing: string[];
+  detected: string[];
+  confidenceSummary: {
+    helmet?: number;
+    goggles?: number;
+    vest?: number;
+  };
+  detections: EppDetectionItem[];
+  timestamp: string;
+  message: string;
+}
+
 export type RootStackParamList = {
   Login: undefined;
+  SafetyCheckpoint: { returnTo?: keyof RootStackParamList } | undefined;
   Main: undefined;
   EntryScreen: undefined;
   RequestsScreen: undefined;

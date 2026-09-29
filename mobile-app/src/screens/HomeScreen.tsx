@@ -43,6 +43,13 @@ const quickActions = [
     title: 'Alertas de Stock',
     description: 'Stock bajo y crítico',
   },
+  {
+    id: 'seguridad',
+    badge: 'S',
+    badgeColor: colors.success,
+    title: 'Checkpoint EPP (IA)',
+    description: 'Escanear casco, lentes y chaleco',
+  },
 ];
 
 export default function HomeScreen() {
@@ -57,6 +64,9 @@ export default function HomeScreen() {
 
   const handlePress = (id: string) => {
     switch (id) {
+      case 'seguridad':
+        navigation.navigate('SafetyCheckpoint');
+        break;
       case 'entradas':
         navigation.navigate('EntryScreen');
         break;
@@ -92,6 +102,31 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
+
+      {/* Banner de Verificación de Seguridad EPP con IA */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.safetyBanner,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={() => navigation.navigate('SafetyCheckpoint')}
+      >
+        <View style={styles.safetyBannerLeft}>
+          <Text style={styles.safetyEmoji}>🛡️</Text>
+          <View style={{ flex: 1 }}>
+            <View style={styles.safetyTagRow}>
+              <Text style={styles.safetyTag}>SEGURIDAD INDUSTRIAL</Text>
+            </View>
+            <Text style={styles.safetyTitle}>Checkpoint de EPP con IA</Text>
+            <Text style={styles.safetySub}>
+              Escanea tu casco, lentes y chaleco antes de operar en almacén.
+            </Text>
+          </View>
+        </View>
+        <View style={styles.safetyActionBadge}>
+          <Text style={styles.safetyActionText}>Escanear</Text>
+        </View>
+      </Pressable>
 
       <Text style={styles.sectionTitle}>Accesos rápidos</Text>
       <View style={styles.grid}>
@@ -212,5 +247,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  safetyBanner: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  safetyBannerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  safetyEmoji: {
+    fontSize: 28,
+  },
+  safetyTagRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  safetyTag: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
+  safetyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  safetySub: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  safetyActionBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+  },
+  safetyActionText: {
+    color: colors.background,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

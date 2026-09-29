@@ -12,6 +12,7 @@ import type {
   StockAlert,
   Supplier,
   User,
+  VerifyEppResult,
 } from '../types';
 
 /**
@@ -131,6 +132,13 @@ export const movementsApi = {
     if (filters.materialId) params.materialId = filters.materialId;
 
     const { data } = await api.get<Movement[]>('/movements', { params });
+    return data;
+  },
+};
+
+export const visionApi = {
+  async verifyEpp(payload: { imageBase64?: string; imageUrl?: string }): Promise<VerifyEppResult> {
+    const { data } = await api.post<VerifyEppResult>('/vision/verify-epp', payload);
     return data;
   },
 };
