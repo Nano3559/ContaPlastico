@@ -12,6 +12,7 @@ import { SuppliersModule } from './suppliers/suppliers.module';
 import { MovementsModule } from './movements/movements.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { ReportsModule } from './reports/reports.module';
+import { VisionModule } from './vision/vision.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ReportsModule } from './reports/reports.module';
     MovementsModule,
     AlertsModule,
     ReportsModule,
+    VisionModule,
   ],
   controllers: [AppController],
   providers: [],
