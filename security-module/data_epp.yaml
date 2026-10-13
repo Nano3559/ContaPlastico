@@ -1,0 +1,24 @@
+path: C:\Users\IFAM_\Desktop\ModuloIA_Seguridad\Dataset
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 17
+names:
+  - helmet        # 0  ← Casco
+  - no_helmet     # 1  ← Sin casco
+  - vest          # 2  ← Chaleco reflectivo
+  - gloves        # 3
+  - no_gloves     # 4
+  - boots         # 5
+  - no_boots      # 6
+  - goggles       # 7  ← Lentes de protección
+  - no_goggles    # 8  ← Sin lentes
+  - ear_protection    # 9
+  - no_ear_protection # 10
+  - traffic_cone      # 11
+  - barrier_tape      # 12
+  - warning_sign      # 13
+  - handrail          # 14
+  - guardrail         # 15
+  - safety_net        # 16

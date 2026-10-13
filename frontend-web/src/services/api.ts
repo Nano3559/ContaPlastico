@@ -190,6 +190,47 @@ async function requestWithFallback<T>(
   return doFetch();
 }
 
+export interface VisionEppResult {
+  accessGranted: boolean;
+  isConclusive: boolean;
+  status: { helmet: boolean; goggles: boolean; vest: boolean };
+  missing: string[];
+  unverified: string[];
+  detected: string[];
+  confidenceSummary: { helmet?: number; goggles?: number; vest?: number };
+  detections: Array<{
+    label: string;
+    confidence: number;
+    box: { x: number; y: number; width: number; height: number };
+  }>;
+  timestamp: string;
+  message: string;
+}
+
+export const visionApi = {
+  async verifyEpp(imageBase64: string): Promise<VisionEppResult> {
+    if (!localStorage.getItem('plastcontrol_token')) {
+      throw new Error('Inicia sesión para ejecutar la verificación EPP.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/vision/verify-epp`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ imageBase64 }),
+      signal: AbortSignal.timeout(60000),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { message?: string | string[] } | null;
+      const message = Array.isArray(payload?.message) ? payload.message[0] : payload?.message;
+      throw new Error(message || `La verificación EPP respondió HTTP ${response.status}.`);
+    }
+
+    isBackendReachable = true;
+    return response.json() as Promise<VisionEppResult>;
+  },
+};
+
 // -------------------------------------------------------------
 // 1. SERVICIO DE AUTENTICACIÓN & USUARIOS (/api/auth & /api/users)
 // -------------------------------------------------------------

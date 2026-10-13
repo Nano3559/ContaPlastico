@@ -19,8 +19,10 @@ export interface EppStatus {
 
 export interface VerifyEppResult {
   accessGranted: boolean;
+  isConclusive: boolean;
   status: EppStatus;
   missing: string[];
+  unverified: string[];
   detected: string[];
   confidenceSummary: {
     helmet?: number;

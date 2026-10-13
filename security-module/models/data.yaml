@@ -1,0 +1,23 @@
+path: C:\dev\epi-epc-data\dataset_unificado
+train: train/images
+val: valid/images
+test: test/images
+nc: 17
+names:
+- helmet
+- no_helmet
+- vest
+- gloves
+- no_gloves
+- boots
+- no_boots
+- goggles
+- no_goggles
+- ear_protection
+- no_ear_protection
+- traffic_cone
+- barrier_tape
+- warning_sign
+- handrail
+- guardrail
+- safety_net

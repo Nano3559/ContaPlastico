@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { VerifyEppDto } from './dto/verify-epp.dto';
 import {
@@ -7,7 +11,7 @@ import {
   VerifyEppResult,
 } from './interfaces/vision-response.interface';
 
-interface RoboflowPrediction {
+interface InferencePrediction {
   x: number;
   y: number;
   width: number;
@@ -16,26 +20,20 @@ interface RoboflowPrediction {
   class: string;
 }
 
-interface RoboflowResponse {
-  predictions?: RoboflowPrediction[];
-  error?: string | Record<string, unknown>;
+interface InferenceResponse {
+  predictions: InferencePrediction[];
+  personDetectionAvailable?: boolean;
+  error?: string;
 }
 
 @Injectable()
 export class VisionService {
-  private readonly logger = new Logger(VisionService.name);
-  private readonly apiKey: string;
-  private readonly modelId: string;
-  private readonly defaultConfidence: number;
+  private readonly inferenceUrl: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiKey =
-      this.configService.get<string>('ROBOFLOW_API_KEY') || 'zbhBSqakJ7PbTmO9NLr6';
-    this.modelId =
-      this.configService.get<string>('ROBOFLOW_MODEL_ID') || 'ppe-detection-qlq3d/1';
-    this.defaultConfidence = parseFloat(
-      this.configService.get<string>('ROBOFLOW_CONFIDENCE_THRESHOLD') || '0.35',
-    );
+    this.inferenceUrl =
+      this.configService.get<string>('PPE_INFERENCE_URL') ||
+      'http://127.0.0.1:5000/infer';
   }
 
   async verifyEpp(dto: VerifyEppDto): Promise<VerifyEppResult> {
@@ -47,69 +45,72 @@ export class VisionService {
 
     if (!base64Image) {
       throw new BadRequestException(
-        'Debe proporcionar una imagen en formato base64 o una URL válida.',
+        'Debe proporcionar una imagen en formato base64 o la imagen de prueba permitida.',
       );
     }
 
-    // Limpiar prefijo data:image/...;base64, si viene incluido
     const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-
-    const roboflowResult = await this.callRoboflowInference(cleanBase64);
-
-    return this.evaluateEppCompliance(roboflowResult.predictions || []);
+    const inferenceResult = await this.callLocalInference(cleanBase64);
+    return this.evaluateEppCompliance(
+      inferenceResult.predictions,
+      inferenceResult.personDetectionAvailable !== false,
+    );
   }
 
   private async fetchImageAsBase64(url: string): Promise<string> {
     try {
-      const response = await fetch(url);
+      const parsedUrl = new URL(url);
+      if (parsedUrl.protocol !== 'https:' || parsedUrl.hostname !== 'images.unsplash.com') {
+        throw new Error('Solo se permite la imagen de prueba pública configurada.');
+      }
+
+      const response = await fetch(parsedUrl, { signal: AbortSignal.timeout(10000) });
       if (!response.ok) {
         throw new Error(`Error al descargar imagen: ${response.statusText}`);
       }
       const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength > 6_000_000) {
+        throw new Error('La imagen de prueba excede el tamaño permitido.');
+      }
       return Buffer.from(arrayBuffer).toString('base64');
-    } catch (err) {
-      this.logger.error(`Fallo al descargar imagen desde URL: ${url}`, err);
+    } catch {
       throw new BadRequestException(
-        'No se pudo descargar la imagen desde la URL proporcionada.',
+        'No se pudo cargar la imagen de prueba permitida.',
       );
     }
   }
 
-  private async callRoboflowInference(base64Data: string): Promise<RoboflowResponse> {
-    const url = `https://serverless.roboflow.com/${this.modelId}?api_key=${this.apiKey}&confidence=${this.defaultConfidence}`;
-
+  private async callLocalInference(base64Data: string): Promise<InferenceResponse> {
     try {
-      const response = await fetch(url, {
+      const response = await fetch(this.inferenceUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: base64Data,
+        body: JSON.stringify({ imageBase64: base64Data }),
+        signal: AbortSignal.timeout(45000),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        this.logger.error(
-          `Error de Roboflow (${response.status}): ${errorText}`,
-        );
-        throw new InternalServerErrorException(
-          `Error del motor de visión IA: ${response.statusText}`,
-        );
+        throw new Error(`El worker local respondió HTTP ${response.status}.`);
       }
 
-      return (await response.json()) as RoboflowResponse;
-    } catch (error) {
-      if (error instanceof InternalServerErrorException) {
-        throw error;
+      const result = (await response.json()) as InferenceResponse;
+      if (!Array.isArray(result.predictions)) {
+        throw new Error('El worker local devolvió una respuesta inválida.');
       }
-      this.logger.error('Error al comunicarse con la API de Roboflow', error);
-      throw new InternalServerErrorException(
-        'No se pudo conectar con el servicio de visión artificial.',
+      return result;
+    } catch {
+      throw new ServiceUnavailableException(
+        'El motor EPP local no está disponible. Inicia security-module/local_inference.py.',
       );
     }
   }
 
-  private evaluateEppCompliance(predictions: RoboflowPrediction[]): VerifyEppResult {
+  private evaluateEppCompliance(
+    predictions: InferencePrediction[],
+    personDetectionAvailable: boolean,
+  ): VerifyEppResult {
     const detections: EppDetectionItem[] = [];
     const bestConfidence: Record<string, number> = {};
 
@@ -131,40 +132,86 @@ export class VisionService {
       }
     }
 
-    const hasHelmetPositive = (bestConfidence['helmet'] || 0) >= 35;
-    const hasHelmetNegative = (bestConfidence['no-helmet'] || 0) > (bestConfidence['helmet'] || 0);
-    const helmetOk = hasHelmetPositive && !hasHelmetNegative;
+    // The worker has already applied PPE_CONFIDENCE_THRESHOLD before returning detections.
+    const personDetected = (bestConfidence['Person'] || 0) > 0;
+    if (personDetectionAvailable && !personDetected) {
+      return {
+        accessGranted: false,
+        isConclusive: false,
+        status: { helmet: false, goggles: false, vest: false },
+        missing: [],
+        unverified: [
+          'Casco de seguridad',
+          'Lentes / Gafas de protección',
+          'Chaleco reflectivo',
+        ],
+        detected: [],
+        confidenceSummary: {},
+        detections,
+        timestamp: new Date().toISOString(),
+        message:
+          'No se pudo identificar claramente al trabajador. Centra a una persona de cuerpo completo, mejora la iluminación y vuelve a capturar la imagen.',
+      };
+    }
 
-    const hasGogglesPositive = (bestConfidence['goggles'] || 0) >= 30;
-    const hasGogglesNegative = (bestConfidence['no-goggles'] || 0) > (bestConfidence['goggles'] || 0);
-    const gogglesOk = hasGogglesPositive && !hasGogglesNegative;
+    const classifyEquipment = (
+      positiveClass: string,
+      negativeClass: string,
+    ): 'present' | 'missing' | 'unknown' => {
+      const positiveConfidence = bestConfidence[positiveClass] || 0;
+      const negativeConfidence = bestConfidence[negativeClass] || 0;
+      const positiveDetected = positiveConfidence > 0;
+      const negativeDetected = negativeConfidence > 0;
 
-    const hasVestPositive = (bestConfidence['vest'] || 0) >= 35;
-    const hasVestNegative = (bestConfidence['no-vest'] || 0) > (bestConfidence['vest'] || 0);
-    const vestOk = hasVestPositive && !hasVestNegative;
+      if (positiveDetected && negativeDetected) {
+        if (positiveConfidence === negativeConfidence) return 'unknown';
+        return positiveConfidence > negativeConfidence ? 'present' : 'missing';
+      }
+      if (positiveDetected) return 'present';
+      if (negativeDetected) return 'missing';
+      return 'unknown';
+    };
+
+    const helmetState = classifyEquipment('helmet', 'no-helmet');
+    const gogglesState = classifyEquipment('goggles', 'no-goggles');
+    const vestState = classifyEquipment('vest', 'no-vest');
 
     const status: EppStatus = {
-      helmet: helmetOk,
-      goggles: gogglesOk,
-      vest: vestOk,
+      helmet: helmetState === 'present',
+      goggles: gogglesState === 'present',
+      vest: vestState === 'present',
     };
 
     const missing: string[] = [];
-    if (!status.helmet) missing.push('Casco de seguridad');
-    if (!status.goggles) missing.push('Lentes / Gafas de protección');
-    if (!status.vest) missing.push('Chaleco reflectivo');
+    const unverified: string[] = [];
+    if (helmetState === 'missing') missing.push('Casco de seguridad');
+    if (gogglesState === 'missing') missing.push('Lentes / Gafas de protección');
+    if (vestState === 'missing') missing.push('Chaleco reflectivo');
+    if (helmetState === 'unknown') unverified.push('Casco de seguridad');
+    if (gogglesState === 'unknown') unverified.push('Lentes / Gafas de protección');
+    if (vestState === 'unknown') unverified.push('Chaleco reflectivo');
 
     const detected: string[] = [];
     if (status.helmet) detected.push('Casco');
     if (status.goggles) detected.push('Lentes');
     if (status.vest) detected.push('Chaleco');
 
-    const accessGranted = missing.length === 0;
+    const isConclusive = unverified.length === 0;
+    const accessGranted = isConclusive && missing.length === 0;
+
+    const inconclusiveDetails = [
+      missing.length ? `Ausencia detectada: ${missing.join(', ')}.` : '',
+      unverified.length ? `Sin verificar: ${unverified.join(', ')}.` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     return {
       accessGranted,
+      isConclusive,
       status,
       missing,
+      unverified,
       detected,
       confidenceSummary: {
         helmet: bestConfidence['helmet'],
@@ -175,7 +222,9 @@ export class VisionService {
       timestamp: new Date().toISOString(),
       message: accessGranted
         ? 'Acceso Autorizado: El operario cumple con todos los implementos de seguridad requeridos (EPP).'
-        : `Acceso Denegado: Faltan implementos de protección obligatorios: ${missing.join(', ')}.`,
+        : isConclusive
+          ? `Acceso Denegado: Faltan implementos de protección obligatorios: ${missing.join(', ')}.`
+          : `No se pudo verificar todo el EPP. ${inconclusiveDetails} Vuelve a capturar al trabajador de cuerpo completo con buena iluminación.`,
     };
   }
 }

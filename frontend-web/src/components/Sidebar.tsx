@@ -17,6 +17,7 @@ import {
   Users,
   Settings,
   Shield,
+  ShieldCheck,
   Layers,
   LogOut
 } from 'lucide-react';
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'reportes', label: '15. Reportes & Balance', icon: FileSpreadsheet },
     { id: 'usuarios', label: '16. Usuarios y Permisos', icon: Users },
     { id: 'configuracion', label: '17. Configuración Fábrica', icon: Settings },
+    { id: 'seguridad', label: '18. Módulo IA: Detección EPP', icon: ShieldCheck, badge: 'IA Live' },
   ];
 
   return (

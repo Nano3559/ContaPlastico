@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class VerifyEppDto {
   @ApiPropertyOptional({
@@ -8,6 +8,7 @@ export class VerifyEppDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(8_000_000)
   imageBase64?: string;
 
   @ApiPropertyOptional({

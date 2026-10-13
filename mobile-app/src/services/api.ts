@@ -138,7 +138,9 @@ export const movementsApi = {
 
 export const visionApi = {
   async verifyEpp(payload: { imageBase64?: string; imageUrl?: string }): Promise<VerifyEppResult> {
-    const { data } = await api.post<VerifyEppResult>('/vision/verify-epp', payload);
+    const { data } = await api.post<VerifyEppResult>('/vision/verify-epp', payload, {
+      timeout: 60000,
+    });
     return data;
   },
 };

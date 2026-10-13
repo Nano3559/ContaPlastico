@@ -153,6 +153,7 @@ export default function SafetyCheckpointScreen() {
   };
 
   const isApproved = result?.accessGranted === true;
+  const isIndeterminate = result !== null && !result.isConclusive;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -224,7 +225,7 @@ export default function SafetyCheckpointScreen() {
           {isAnalyzing && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>Procesando con IA (Roboflow YOLO)...</Text>
+              <Text style={styles.loadingText}>Procesando con modelo ONNX local...</Text>
               <Text style={styles.loadingSubtext}>Detectando casco, lentes y chaleco</Text>
             </View>
           )}
@@ -239,7 +240,13 @@ export default function SafetyCheckpointScreen() {
             <View
               style={[
                 styles.eppCard,
-                result && (result.status.helmet ? styles.eppCardSuccess : styles.eppCardDanger),
+                result
+                  ? result.unverified.includes('Casco de seguridad')
+                    ? styles.eppCardInconclusive
+                    : result.status.helmet
+                      ? styles.eppCardSuccess
+                      : styles.eppCardDanger
+                  : null,
               ]}
             >
               <View style={styles.eppCardIcon}>
@@ -249,15 +256,19 @@ export default function SafetyCheckpointScreen() {
                 <Text style={styles.eppCardTitle}>Casco de Seguridad</Text>
                 <Text style={styles.eppCardStatus}>
                   {result
-                    ? result.status.helmet
-                      ? `Verificado (${result.confidenceSummary.helmet || 0}%)`
-                      : 'Faltante / No detectado'
+                    ? result.unverified.includes('Casco de seguridad')
+                      ? 'Sin verificar; vuelve a capturar'
+                      : result.status.helmet
+                        ? `Verificado (${result.confidenceSummary.helmet || 0}%)`
+                        : 'Faltante / No detectado'
                     : 'Pendiente de escaneo'}
                 </Text>
               </View>
               <View style={styles.eppCardBadge}>
                 {result ? (
-                  result.status.helmet ? (
+                  result.unverified.includes('Casco de seguridad') ? (
+                    <AlertTriangle size={20} color={colors.warning} />
+                  ) : result.status.helmet ? (
                     <CheckCircle2 size={20} color={colors.success} />
                   ) : (
                     <XCircle size={20} color={colors.danger} />
@@ -272,7 +283,13 @@ export default function SafetyCheckpointScreen() {
             <View
               style={[
                 styles.eppCard,
-                result && (result.status.goggles ? styles.eppCardSuccess : styles.eppCardDanger),
+                result
+                  ? result.unverified.includes('Lentes / Gafas de protección')
+                    ? styles.eppCardInconclusive
+                    : result.status.goggles
+                      ? styles.eppCardSuccess
+                      : styles.eppCardDanger
+                  : null,
               ]}
             >
               <View style={styles.eppCardIcon}>
@@ -282,15 +299,19 @@ export default function SafetyCheckpointScreen() {
                 <Text style={styles.eppCardTitle}>Lentes de Protección</Text>
                 <Text style={styles.eppCardStatus}>
                   {result
-                    ? result.status.goggles
-                      ? `Verificado (${result.confidenceSummary.goggles || 0}%)`
-                      : 'Faltante / No detectado'
+                    ? result.unverified.includes('Lentes / Gafas de protección')
+                      ? 'Sin verificar; vuelve a capturar'
+                      : result.status.goggles
+                        ? `Verificado (${result.confidenceSummary.goggles || 0}%)`
+                        : 'Faltante / No detectado'
                     : 'Pendiente de escaneo'}
                 </Text>
               </View>
               <View style={styles.eppCardBadge}>
                 {result ? (
-                  result.status.goggles ? (
+                  result.unverified.includes('Lentes / Gafas de protección') ? (
+                    <AlertTriangle size={20} color={colors.warning} />
+                  ) : result.status.goggles ? (
                     <CheckCircle2 size={20} color={colors.success} />
                   ) : (
                     <XCircle size={20} color={colors.danger} />
@@ -305,7 +326,13 @@ export default function SafetyCheckpointScreen() {
             <View
               style={[
                 styles.eppCard,
-                result && (result.status.vest ? styles.eppCardSuccess : styles.eppCardDanger),
+                result
+                  ? result.unverified.includes('Chaleco reflectivo')
+                    ? styles.eppCardInconclusive
+                    : result.status.vest
+                      ? styles.eppCardSuccess
+                      : styles.eppCardDanger
+                  : null,
               ]}
             >
               <View style={styles.eppCardIcon}>
@@ -315,15 +342,19 @@ export default function SafetyCheckpointScreen() {
                 <Text style={styles.eppCardTitle}>Chaleco Reflectivo</Text>
                 <Text style={styles.eppCardStatus}>
                   {result
-                    ? result.status.vest
-                      ? `Verificado (${result.confidenceSummary.vest || 0}%)`
-                      : 'Faltante / No detectado'
+                    ? result.unverified.includes('Chaleco reflectivo')
+                      ? 'Sin verificar; vuelve a capturar'
+                      : result.status.vest
+                        ? `Verificado (${result.confidenceSummary.vest || 0}%)`
+                        : 'Faltante / No detectado'
                     : 'Pendiente de escaneo'}
                 </Text>
               </View>
               <View style={styles.eppCardBadge}>
                 {result ? (
-                  result.status.vest ? (
+                  result.unverified.includes('Chaleco reflectivo') ? (
+                    <AlertTriangle size={20} color={colors.warning} />
+                  ) : result.status.vest ? (
                     <CheckCircle2 size={20} color={colors.success} />
                   ) : (
                     <XCircle size={20} color={colors.danger} />
@@ -345,7 +376,15 @@ export default function SafetyCheckpointScreen() {
         )}
 
         {result && (
-          <View style={isApproved ? styles.resultCardSuccess : styles.resultCardDanger}>
+          <View
+            style={
+              isApproved
+                ? styles.resultCardSuccess
+                : isIndeterminate
+                  ? styles.resultCardInconclusive
+                  : styles.resultCardDanger
+            }
+          >
             {isApproved ? (
               <>
                 <ShieldCheck size={28} color={colors.success} />
@@ -354,6 +393,14 @@ export default function SafetyCheckpointScreen() {
                   <Text style={styles.resultSuccessBody}>
                     Todos los implementos reglamentarios han sido verificados satisfactoriamente.
                   </Text>
+                </View>
+              </>
+            ) : isIndeterminate ? (
+              <>
+                <AlertTriangle size={28} color={colors.warning} />
+                <View style={styles.resultTextCol}>
+                  <Text style={styles.resultInconclusiveTitle}>NO SE PUDO VERIFICAR</Text>
+                  <Text style={styles.resultInconclusiveBody}>{result.message}</Text>
                 </View>
               </>
             ) : (
@@ -481,13 +528,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
   },
   viewfinderContainer: {
     width: '100%',
     height: 270,
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
@@ -653,6 +700,10 @@ const styles = StyleSheet.create({
     borderColor: colors.danger,
     backgroundColor: 'rgba(239, 68, 68, 0.08)',
   },
+  eppCardInconclusive: {
+    borderColor: colors.warning,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+  },
   eppCardIcon: {
     width: 36,
     height: 36,
@@ -734,6 +785,27 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     marginTop: spacing.md,
+  },
+  resultCardInconclusive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    marginTop: spacing.md,
+  },
+  resultInconclusiveTitle: {
+    color: colors.warning,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  resultInconclusiveBody: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    marginTop: 2,
   },
   resultDangerTitle: {
     color: colors.danger,

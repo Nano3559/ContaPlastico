@@ -138,3 +138,19 @@ tmp/
 scratch/
 *.bak
 *.tmp
+
+# ------------------------------------------------------------------------------
+# 12. Python: entornos locales, bytecode y pesos de modelos
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+security-module/*.pt
+security-module/**/*.pt
+security-module/weights/
+security-module/models/*.onnx
+security-module/models/Dataset_no_person_glasses/
+security-module/models/train/
+security-module/models/valid/
+security-module/models/test/

@@ -1,0 +1,30 @@
+{
+  "input_size": 640,
+  "class_names": [
+    "helmet",
+    "no_helmet",
+    "vest",
+    "gloves",
+    "no_gloves",
+    "boots",
+    "no_boots",
+    "goggles",
+    "no_goggles",
+    "ear_protection",
+    "no_ear_protection",
+    "traffic_cone",
+    "barrier_tape",
+    "warning_sign",
+    "handrail",
+    "guardrail",
+    "safety_net"
+  ],
+  "api_labels": {
+    "no_helmet": "no-helmet",
+    "no_gloves": "no-gloves",
+    "no_boots": "no-boots",
+    "no_goggles": "no-goggles",
+    "no_ear_protection": "no-ear-protection"
+  },
+  "person_detection_available": false
+}

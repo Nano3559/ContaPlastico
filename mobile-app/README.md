@@ -56,18 +56,23 @@ Puedes ver/editar estos usuarios en
    npm install
    ```
 
-2. **Configurar la URL del backend** en `src/services/api.ts`
-   (constante `API_BASE_URL`):
-   - Android emulador: `http://10.0.2.2:3000`
-   - Dispositivo físico (Expo Go): tu IP local (ej: `http://192.168.1.10:3000`)
-   - Web/Vercel: la URL pública del backend, o usa la variable de entorno
-     `EXPO_PUBLIC_API_URL`.
+2. **Configurar el backend para el dispositivo físico.** Copia `.env.example` a
+   `.env` y configura `EXPO_PUBLIC_API_URL` con la IPv4 de la laptop donde corre
+   NestJS (por ejemplo, `http://192.168.0.28:3000`). El iPhone y la laptop deben
+   estar en la misma Wi-Fi. En Android Emulator se puede usar
+   `http://10.0.2.2:3000`; para producción usa HTTPS.
 
 3. **Iniciar Expo**:
    ```bash
-   npx expo start
+   npx expo start --host lan
    ```
-   Escanea el QR con **Expo Go** (Android/iOS).
+   Escanea el QR con **Expo Go** en iPhone. Usa la cámara nativa de Expo Go para
+   evitar las restricciones de permisos de cámara de Safari en HTTP local.
+
+El checkpoint EPP usa el worker ONNX local descrito en `security-module/README.md`.
+Inicia ese worker en la laptop antes de verificar una imagen. La captura viaja
+del iPhone al backend NestJS y de ahí al worker por loopback; no requiere una API
+key externa ni envía la imagen a un proveedor cloud.
 
 ---
 
