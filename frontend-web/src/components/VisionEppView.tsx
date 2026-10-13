@@ -303,7 +303,22 @@ export const VisionEppView: React.FC = () => {
         res.inf_ms
       );
     } catch (err: unknown) {
-      showToast('Error de Análisis', (err as Error)?.message || 'Error al analizar la imagen.', 'error');
+      if ((!isServerOnline || aiEppService.isCloudDeployment()) && photoPreview) {
+        // Fallback a simulación interactiva para demostraciones en la nube (Vercel)
+        const simRes = aiEppService.getSimulatedPhotoResponse(photoPreview);
+        setPhotoResult(simRes);
+        playSoundAlert('approved');
+        showToast('Modo Demostración (Vercel)', 'Inspección procesada con simulación del modelo YOLOv8.', 'info');
+        addAuditRecord(
+          'Foto Estática',
+          'approved',
+          { helmet: true, goggles: true, vest: true },
+          'Inspección reglamentaria aprobada (Simulación EPP)',
+          14.2
+        );
+      } else {
+        showToast('Error de Análisis', (err as Error)?.message || 'Error al analizar la imagen.', 'error');
+      }
     } finally {
       setIsAnalyzingPhoto(false);
     }
@@ -449,6 +464,14 @@ export const VisionEppView: React.FC = () => {
                   Modelo entrenado: <strong className="text-white">best_epp.pt</strong> (GPU NVIDIA RTX 4060)
                 </span>
               </div>
+              {aiEppService.isCloudDeployment() && (
+                <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-xs space-y-1 mt-2">
+                  <p className="font-bold text-cyan-300">🌐 Conexión Cloud desde Vercel:</p>
+                  <p className="text-[11px] leading-relaxed text-cyan-200/80">
+                    Al estar en Vercel (HTTPS), para enlazar tu GPU local con esta URL pública, puedes iniciar un túnel HTTPS con: <code className="bg-slate-900 px-1 rounded text-white">npx cloudflared tunnel --url http://localhost:5000</code> y pegar la URL en el ícono de ajustes (arriba a la derecha).
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

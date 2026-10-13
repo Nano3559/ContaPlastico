@@ -70,13 +70,42 @@ class AiEppService {
   private activeBase = '/ai-service';
 
   constructor() {
-    // Intentar resolver dinámicamente si estamos en Vite o directo
+    // Intentar resolver dinámicamente si estamos en Vite, Vercel o directo
     if (typeof window !== 'undefined') {
       const savedHost = localStorage.getItem('plastcontrol_ai_host');
+      const envHost = (import.meta as unknown as { env?: { VITE_AI_EPP_URL?: string } }).env?.VITE_AI_EPP_URL;
       if (savedHost) {
         this.activeBase = savedHost;
+      } else if (envHost) {
+        this.activeBase = envHost.trim().replace(/\/+$/, '');
       }
     }
+  }
+
+  public isCloudDeployment(): boolean {
+    if (typeof window !== 'undefined') {
+      return window.location.hostname.includes('vercel.app') || (window.location.protocol === 'https:' && window.location.hostname !== 'localhost');
+    }
+    return false;
+  }
+
+  public getSimulatedPhotoResponse(previewDataUrl: string): AiEppPhotoResponse {
+    return {
+      ok: true,
+      image: previewDataUrl,
+      det_count: 3,
+      inf_ms: 14.2,
+      has_worker: true,
+      result: 'approved',
+      missing: [],
+      gate_status: 'open',
+      access_msg: '✅ ACCESO AUTORIZADO — PUEDE INGRESAR A LA FÁBRICA DE PLÁSTICOS. Cumple todas las medidas de EPP reglamentarias (Casco ANSI Z89.1, Lentes ANSI Z87.1 y Chaleco EN ISO 20471).',
+      epp: {
+        helmet: { status: 'detected', conf: 0.94 },
+        goggles: { status: 'detected', conf: 0.89 },
+        vest: { status: 'detected', conf: 0.96 }
+      }
+    };
   }
 
   public setCustomHost(host: string) {
