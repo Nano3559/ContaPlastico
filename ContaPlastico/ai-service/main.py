@@ -149,7 +149,20 @@ def analyze_epp_tensor(pil_img: Image.Image) -> EppDetectionResponse:
                                 wPercent=round(bw, 1),
                                 hPercent=round(bh, 1)
                             ))
+                        elif "glass" in normalized_cls_name or "goggle" in normalized_cls_name:
+                            boxes_out.append(DetectionBox(
+                                id=f"box-no-glasses-{len(boxes_out)}",
+                                label=f"YOLO: SIN_GAFAS ({cls_name.upper()})",
+                                category="NO_GLASSES",
+                                confidence=conf,
+                                color="#f43f5e",
+                                xPercent=round(bx, 1),
+                                yPercent=round(by, 1),
+                                wPercent=round(bw, 1),
+                                hPercent=round(bh, 1)
+                            ))
                         continue
+
 
                     # Evaluate positive PPE classes from the custom dataset.
                     if "helmet" in normalized_cls_name or "hardhat" in normalized_cls_name:
