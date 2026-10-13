@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # 🌐 Frontend Web (Landing Page & Dashboard)
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: plastcontrol_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+
+  # 🗄️ Base de Datos PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: plastcontrol_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: plastic_factory_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 📊 Panel de Administración PgAdmin (Opcional)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: plastcontrol_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@plastcontrol.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

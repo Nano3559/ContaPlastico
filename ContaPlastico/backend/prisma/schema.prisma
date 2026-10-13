@@ -1,0 +1,218 @@
+// Prisma Schema — Sistema de Control de Materia Prima (Fábrica de Plásticos)
+// Persona 1 (Backend)
+
+datasource db {
+  provider = "postgresql" // o "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ALMACEN
+  PRODUCCION
+  SUPERVISOR
+}
+
+enum MaterialType {
+  RESINA
+  MASTERBATCH
+  ADITIVO
+  RECUPERADO
+}
+
+enum ProcessType {
+  EXTRUSION
+  INYECCION
+  SOPLADO
+  TERMOFORMADO
+}
+
+enum StockStatus {
+  OPTIMO
+  BAJO
+  CRITICO
+}
+
+enum RequestStatus {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  COMPLETADA
+}
+
+enum MovementType {
+  ENTRADA
+  SALIDA
+  CONSUMO
+  MERMA
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  password     String
+  name         String
+  role         Role        @default(PRODUCCION)
+  shift        String?     // Turno Mañana / Tarde / Noche
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  entriesRecorded   BatchEntry[]
+  requestsCreated   ProductionRequest[]
+  scrapsReported    ScrapRecord[]
+  stockMovements     StockMovement[]
+  safetyAudits      SafetyAudit[]
+}
+
+model Supplier {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  contactName  String?
+  phone        String?
+  email        String?
+  createdAt    DateTime      @default(now())
+
+  entries      BatchEntry[]
+  materials    RawMaterial[]
+}
+
+model RawMaterial {
+  id              String        @id @default(uuid())
+  code            String        @unique // Ej: HDPE-5502, PP-CP-0330
+  name            String
+  type            MaterialType  @default(RESINA)
+  category        ProcessType   @default(EXTRUSION)
+  density         Float         // g/cm³
+  meltFlowIndex   Float         // MFI (g/10min)
+  unit            String        @default("KG")
+  currentStockKg  Float         @default(0.0)
+  minStockKg      Float         @default(1000.0)
+  maxCapacityKg   Float         @default(20000.0)
+  siloLocation    String        // Ej: Silo A-01
+  status          StockStatus   @default(OPTIMO)
+  supplierId      String?
+  supplier        Supplier?     @relation(fields: [supplierId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  entries         BatchEntry[]
+  alerts          StockAlert[]
+  requestMaterials ProductionRequestMaterial[]
+  stockMovements  StockMovement[]
+  scrapRecords    ScrapRecord[]
+}
+
+model BatchEntry {
+  id                    String       @id @default(uuid())
+  entryCode             String       @unique // Ej: ENT-2026-001
+  materialId            String
+  material              RawMaterial  @relation(fields: [materialId], references: [id])
+  supplierId            String?
+  supplier              Supplier?    @relation(fields: [supplierId], references: [id])
+  supplierBatch         String       // Lote del fabricante petroquímico
+  quantityKg            Float
+  invoiceNumber         String
+  siloDestination       String
+  qualityCertificate    Boolean      @default(true)
+  notes                 String?
+  receivedById          String
+  receivedBy            User         @relation(fields: [receivedById], references: [id])
+  createdAt             DateTime     @default(now())
+}
+
+model ProductionRequest {
+  id              String          @id @default(uuid())
+  orderCode       String          @unique // Ej: OP-2026-102
+  line            String          // Ej: Extrusión 01
+  processType     ProcessType     @default(EXTRUSION)
+  targetProduct   String
+  requestedById   String
+  requestedBy     User            @relation(fields: [requestedById], references: [id])
+  status          RequestStatus   @default(PENDIENTE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  scraps          ScrapRecord[]
+  materials       ProductionRequestMaterial[]
+  stockMovements  StockMovement[]
+}
+
+model ProductionRequestMaterial {
+  id                  String             @id @default(uuid())
+  productionRequestId String
+  productionRequest   ProductionRequest  @relation(fields: [productionRequestId], references: [id], onDelete: Cascade)
+  materialId          String
+  material            RawMaterial        @relation(fields: [materialId], references: [id])
+  quantityKg          Float
+  createdAt           DateTime           @default(now())
+
+  @@unique([productionRequestId, materialId])
+}
+
+model ScrapRecord {
+  id                     String             @id @default(uuid())
+  productionRequestId    String
+  productionRequest      ProductionRequest  @relation(fields: [productionRequestId], references: [id])
+  rawMaterialUsedKg      Float
+  finishedProductKg      Float
+  recoverableScrapKg     Float              // Scrap para molienda interna
+  discardScrapKg         Float              // Purga o desecho contaminado
+  scrapPercentage        Float
+  cause                  String             // Arranque, cambio de color, descalibración
+  operatorId             String
+  operator               User               @relation(fields: [operatorId], references: [id])
+  materialId             String?
+  material               RawMaterial?       @relation(fields: [materialId], references: [id])
+  createdAt              DateTime           @default(now())
+}
+
+model StockMovement {
+  id                  String             @id @default(uuid())
+  type                MovementType
+  quantityKg          Float
+  materialId          String
+  material            RawMaterial        @relation(fields: [materialId], references: [id])
+  userId              String
+  user                User               @relation(fields: [userId], references: [id])
+  productionRequestId String?
+  productionRequest   ProductionRequest? @relation(fields: [productionRequestId], references: [id])
+  notes               String?
+  createdAt           DateTime           @default(now())
+
+  @@index([materialId, createdAt])
+}
+
+model StockAlert {
+  id              String       @id @default(uuid())
+  materialId      String
+  material        RawMaterial  @relation(fields: [materialId], references: [id])
+  currentStockKg  Float
+  minStockKg      Float
+  severity        String       // WARNING | CRITICAL
+  resolved        Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+}
+
+model SafetyAudit {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  timestamp       DateTime     @default(now())
+  compliant       Boolean
+  hasHelmet       Boolean
+  hasVest         Boolean
+  hasGlasses      Boolean
+  score           Float        @default(0.0)
+  photoUrl        String?      // Snapshot miniatura de evidencia
+  bypassUsed      Boolean      @default(false)
+  station         String       @default("Kiosco Entrada Almacén")
+  supervisorNotes String?
+  createdAt       DateTime     @default(now())
+
+  @@index([userId, createdAt])
+}
