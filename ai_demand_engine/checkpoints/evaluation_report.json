@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-11-03 21:15:23",
+  "hardware": {
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "cuda_version": "12.4"
+  },
+  "training_time_seconds": 160.4959270954132,
+  "epochs_trained": 120,
+  "best_epoch": 39,
+  "best_val_loss": 0.0787691529840231,
+  "test_metrics": {
+    "Cantidad_Unidades": {
+      "rmse": 41826.796875,
+      "mae": 15822.3349609375,
+      "wape": 39.245304465293884,
+      "r2": 0.45945350578841226
+    },
+    "Total_Peso_Plastico_Kg": {
+      "rmse": 2329.156982421875,
+      "mae": 926.1592407226562,
+      "wape": 22.454778850078583,
+      "r2": 0.8831787077074014
+    },
+    "Impacto_Comercial_Estimado_USD": {
+      "rmse": 1808.45458984375,
+      "mae": 696.4348754882812,
+      "wape": 50.856512784957886,
+      "r2": 0.6714011027657983
+    }
+  }
+}

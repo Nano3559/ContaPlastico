@@ -16,6 +16,7 @@ import { BackendConnectionModal } from './components/BackendConnectionModal';
 import { NotificationsCenterModal } from './components/NotificationsCenterModal';
 import { LoginView } from './components/LoginView';
 import { VisionEppView } from './components/VisionEppView';
+import { DemandForecastingView } from './components/DemandForecastingView';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { mockUsers } from './data/mockData';
 import { apiConfig, authApi } from './services/api';
@@ -232,6 +233,10 @@ function AppContent() {
 
           {activeSection === 'seguridad' && (
             <VisionEppView />
+          )}
+
+          {activeSection === 'prediccion-demanda' && (
+            <DemandForecastingView />
           )}
 
           {activeSection === 'proveedores' && (

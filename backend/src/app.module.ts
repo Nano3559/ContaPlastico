@@ -13,6 +13,7 @@ import { MovementsModule } from './movements/movements.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { ReportsModule } from './reports/reports.module';
 import { VisionModule } from './vision/vision.module';
+import { DemandForecastingModule } from './demand-forecasting/demand-forecasting.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { VisionModule } from './vision/vision.module';
     AlertsModule,
     ReportsModule,
     VisionModule,
+    DemandForecastingModule,
   ],
   controllers: [AppController],
   providers: [],

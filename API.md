@@ -201,3 +201,75 @@
   }
   ```
 
+---
+
+## 🤖 7. Módulo IA: Predicción de Demanda & Planificación MRP (`/api/demand-forecasting`)
+
+### `POST /api/demand-forecasting/predict`
+- **Roles**: Todos
+- **Nota**: `modelAccuracyScore` y `mapePercent` son valores ilustrativos en este ejemplo. La puntuación devuelta se calcula sobre el histórico cargado y no representa una validación independiente ni una garantía sobre ventas reales.
+- **Body**:
+  ```json
+  {
+    "granularity": "month", // "month" | "week" | "year"
+    "periods": 6,
+    "productCode": "TAPA-HDPE-28", // opcional
+    "category": "INYECCION", // opcional: INYECCION | SOPLADO | EXTRUSION | TERMOFORMADO
+    "algorithm": "AUTO_ENSEMBLE" // "AUTO_ENSEMBLE" | "HOLT_WINTERS" | "REGRESSION" | "EXPONENTIAL_SMOOTHING"
+  }
+  ```
+- **Response `200 OK`**:
+  ```json
+  {
+    "granularity": "month",
+    "algorithm": "AUTO_ENSEMBLE",
+    "periodsForecasted": 6,
+    "modelAccuracyScore": 92.4,
+    "mapePercent": 7.6,
+    "historical": [
+      {
+        "periodKey": "2024-11",
+        "periodLabel": "Nov 2024",
+        "actualUnits": 385000,
+        "actualWeightKg": 38200,
+        "actualRevenue": 92400
+      }
+    ],
+    "forecast": [
+      {
+        "periodKey": "2026-11",
+        "periodLabel": "Nov 2026",
+        "forecastUnits": 590000,
+        "lowerBoundUnits": 566400,
+        "upperBoundUnits": 613600,
+        "forecastWeightKg": 57820,
+        "forecastRevenue": 141600,
+        "confidenceLevel": 95,
+        "growthVsPreviousPeriod": 4.4
+      }
+    ],
+    "resinRequirements": [
+      {
+        "materialCode": "HDPE-5502",
+        "materialName": "Polietileno de Alta Densidad (HDPE)",
+        "siloLocation": "Silo A-01",
+        "currentStockKg": 14500,
+        "requiredKgNextPeriod": 18450,
+        "stockStatusAfterForecast": "BAJO",
+        "estimatedDaysUntilStockout": 23
+      }
+    ]
+  }
+  ```
+
+### `GET /api/demand-forecasting/summary`
+- **Query Params**: `?productCode=&category=`
+- **Response `200 OK`**: Resumen de ventas, toneladas de plástico transformado, crecimiento YoY y top productos.
+
+### `GET /api/demand-forecasting/history`
+- **Query Params**: `?page=1&limit=50&search=&productCode=&category=`
+- **Response `200 OK`**: Listado paginado de transacciones de los últimos 2 años.
+
+### `GET /api/demand-forecasting/download-csv`
+- **Response**: Stream del archivo `demand_sales_history_2years.csv` con formato RFC 4180 y UTF-8 BOM.
+

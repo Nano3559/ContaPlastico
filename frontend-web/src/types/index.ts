@@ -89,3 +89,134 @@ export interface UserProfile {
   avatar: string;
   shift: string;
 }
+
+export interface SaleRecord {
+  id: string;
+  saleCode: string;
+  saleDate: string;
+  productCode: string;
+  productName: string;
+  category: ProcessCategory;
+  clientName: string;
+  clientSector?: string;
+  clientRegion?: string;
+  quantityUnits: number;
+  unitWeightKg: number;
+  totalWeightKg: number;
+  unitPrice: number;
+  totalAmount: number;
+  rawMaterialId?: string;
+  seasonality?: string;
+  status: string;
+  createdAt: string;
+  rawMaterial?: {
+    code: string;
+    name: string;
+    siloLocation: string;
+  };
+}
+
+export interface HistoricalDemandDataPoint {
+  periodKey: string;
+  periodLabel: string;
+  date: string;
+  actualUnits: number;
+  actualWeightKg: number;
+  actualRevenue: number;
+  transactionsCount: number;
+}
+
+export interface ForecastDemandDataPoint {
+  periodKey: string;
+  periodLabel: string;
+  date: string;
+  forecastUnits: number;
+  lowerBoundUnits: number;
+  upperBoundUnits: number;
+  forecastWeightKg: number;
+  forecastRevenue: number;
+  forecastRevenueBOB?: number;
+  confidenceLevel: number;
+  growthVsPreviousPeriod: number;
+  isSimulated?: boolean;
+  simulatedUnits?: number;
+  simulatedWeightKg?: number;
+  simulatedRevenue?: number;
+  simulatedRevenueBOB?: number;
+  simulatedResinCostUSD?: number;
+  simulatedResinCostBOB?: number;
+  simulatedMarginUSD?: number;
+  simulatedMarginPct?: number;
+}
+
+export interface ResinRequirementItem {
+  materialCode: string;
+  materialName: string;
+  materialType: string;
+  siloLocation: string;
+  currentStockKg: number;
+  minStockKg: number;
+  requiredKgNextPeriod: number;
+  requiredKgTotalForecast: number;
+  stockStatusAfterForecast: 'OPTIMO' | 'BAJO' | 'CRITICO';
+  estimatedDaysUntilStockout: number;
+  replenishmentCostUSD?: number;
+  replenishmentCostBOB?: number;
+  recycledSharePct?: number;
+}
+
+export interface DemandPredictionResult {
+  granularity: 'month' | 'week' | 'year';
+  algorithm: string;
+  periodsForecasted: number;
+  modelAccuracyScore: number;
+  mapePercent: number;
+  historical: HistoricalDemandDataPoint[];
+  forecast: ForecastDemandDataPoint[];
+  resinRequirements: ResinRequirementItem[];
+  simulation?: {
+    isSimulated: boolean;
+    demandDeltaPct: number;
+    scrapDeltaPct: number;
+    exchangeRateBOB?: number;
+    priceDeltaPct?: number;
+    resinCostDeltaPct?: number;
+    recycledMaterialPct?: number;
+    plantEfficiencyPct?: number;
+    simulatedResinRequirements?: ResinRequirementItem[];
+  };
+  metadata: {
+    totalHistoricalDataPoints: number;
+    trainedUpToDate: string;
+    filterProduct: string;
+    filterCategory: string;
+  };
+}
+
+export interface DemandSummary {
+  totalTransactions: number;
+  totalUnitsSold: number;
+  totalPlasticTons: number;
+  totalRevenueUSD: number;
+  averageOrderWeightKg: number;
+  yoyGrowthPercent: number;
+  topProducts: {
+    productCode: string;
+    productName: string;
+    category: ProcessCategory;
+    totalUnits: number;
+    totalWeightKg: number;
+    totalRevenue: number;
+    ordersCount: number;
+  }[];
+  materialsInInventory: {
+    id: string;
+    code: string;
+    name: string;
+    currentStockKg: number;
+    minStockKg: number;
+    siloLocation: string;
+    status: StockStatus;
+  }[];
+}
+

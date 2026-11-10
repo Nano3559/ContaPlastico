@@ -1,0 +1,131 @@
+{
+  "csv_path": "Dataset_IA_Predictiva\\demand_sales_history_Oficial.csv",
+  "total_samples": 1728,
+  "train_samples": 1209,
+  "val_samples": 259,
+  "test_samples": 260,
+  "cat_columns": [
+    "Codigo_Producto",
+    "Proceso_Transformacion",
+    "Sector_Cliente",
+    "Region_Cliente",
+    "Estacionalidad",
+    "Factor_Impacto",
+    "Estado_Orden"
+  ],
+  "num_features_dim": 10,
+  "target_columns": [
+    "Cantidad_Unidades",
+    "Total_Peso_Plastico_Kg",
+    "Impacto_Comercial_Estimado_USD"
+  ],
+  "vocabularies": {
+    "Codigo_Producto": {
+      "BANDEJA-PP-1L": 0,
+      "BIDON-5L-HDPE": 1,
+      "BOLSA-HDPE-40X60": 2,
+      "BOTELLA-1L-HDPE": 3,
+      "ENVASE-PP-250ML": 4,
+      "PELICULA-LDPE-TERMO": 5,
+      "PREF-PET-28": 6,
+      "TAPA-FLIP-PP": 7,
+      "TAPA-HDPE-28": 8
+    },
+    "Proceso_Transformacion": {
+      "EXTRUSION": 0,
+      "INYECCION": 1,
+      "SOPLADO": 2,
+      "TERMOFORMADO": 3
+    },
+    "Sector_Cliente": {
+      "Agroquímicos": 0,
+      "Alimentos": 1,
+      "Bebidas": 2,
+      "Cosméticos": 3,
+      "Embalaje": 4,
+      "Farmacéutico": 5,
+      "Lácteos": 6,
+      "Químicos y limpieza": 7
+    },
+    "Region_Cliente": {
+      "Centro": 0,
+      "Exportación": 1,
+      "Norte": 2,
+      "Occidente": 3,
+      "Sur": 4
+    },
+    "Estacionalidad": {
+      "ALTA": 0,
+      "BAJA": 1,
+      "MEDIA": 2,
+      "PICO_FIN_ANO": 3
+    },
+    "Factor_Impacto": {
+      "ALZA_COSTOS_RESINA": 0,
+      "CAMBIO_PLAN_CLIENTE": 1,
+      "CAPACIDAD_PRODUCTIVA_INSUFICIENTE": 2,
+      "CONTRATO_NUEVO": 3,
+      "DANO_TRANSPORTE": 4,
+      "DEMANDA_BASE": 5,
+      "DEMANDA_DEBIL": 6,
+      "DEMORA_LOGISTICA": 7,
+      "ERROR_ESPECIFICACION": 8,
+      "FALTA_CREDITO_CLIENTE": 9,
+      "MANTENIMIENTO_PROGRAMADO": 10,
+      "OFERTA_RESINA": 11,
+      "PROMOCION_COMERCIAL": 12,
+      "RECHAZO_CALIDAD": 13,
+      "RESTRICCION_MATERIA_PRIMA": 14,
+      "TEMPORADA_ALTA": 15
+    },
+    "Estado_Orden": {
+      "CANCELADA": 0,
+      "COMPLETADA": 1,
+      "DEVUELTA": 2,
+      "PARCIAL": 3
+    }
+  },
+  "vocab_sizes": {
+    "Codigo_Producto": 9,
+    "Proceso_Transformacion": 4,
+    "Sector_Cliente": 8,
+    "Region_Cliente": 5,
+    "Estacionalidad": 4,
+    "Factor_Impacto": 16,
+    "Estado_Orden": 4
+  },
+  "scalers": {
+    "input_Precio_Unitario_USD": {
+      "mean": 0.9311881071453144,
+      "std": 1.473883646012374
+    },
+    "input_Peso_Unitario_Kg": {
+      "mean": 0.6256691378270139,
+      "std": 1.143665208109075
+    },
+    "input_Descuento_Pct": {
+      "mean": 0.2377673120424525,
+      "std": 0.6676629764496728
+    },
+    "input_Unidades_Solicitadas": {
+      "mean": 9.58120396650589,
+      "std": 2.4627822878570327
+    },
+    "input_Monto_Potencial_USD": {
+      "mean": 8.608872223944987,
+      "std": 1.8661103388445226
+    },
+    "target_Cantidad_Unidades": {
+      "mean": 8.719271828027715,
+      "std": 4.119449382221759
+    },
+    "target_Total_Peso_Plastico_Kg": {
+      "mean": 6.608005687973436,
+      "std": 3.006030819462081
+    },
+    "target_Impacto_Comercial_Estimado_USD": {
+      "mean": -2.9254019199078023,
+      "std": 5.110126089971581
+    }
+  }
+}

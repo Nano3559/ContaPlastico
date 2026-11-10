@@ -104,6 +104,7 @@ model RawMaterial {
   requestMaterials ProductionRequestMaterial[]
   stockMovements  StockMovement[]
   scrapRecords    ScrapRecord[]
+  sales           SaleRecord[]
 }
 
 model BatchEntry {
@@ -196,3 +197,31 @@ model StockAlert {
   resolved        Boolean      @default(false)
   createdAt       DateTime     @default(now())
 }
+
+model SaleRecord {
+  id              String       @id @default(uuid())
+  saleCode        String       @unique // Ej: VTA-2024-0001
+  saleDate        DateTime     // Fecha de venta (histórico 2 años)
+  productCode     String       // Ej: PREF-PET-28, TAPA-HDPE-28, BIDON-5L-HDPE, etc.
+  productName     String
+  category        ProcessType  @default(INYECCION)
+  clientName      String
+  clientSector    String?      // Bebidas, Agroquímicos, Lácteos, Alimentos, Farmacéutico, Cosméticos
+  clientRegion    String?      // Norte, Centro, Sur, Occidente, Oriente, Exportación
+  quantityUnits   Int          // Unidades vendidas
+  unitWeightKg    Float        // Peso unitario en kg
+  totalWeightKg   Float        // Peso total en kg (quantityUnits * unitWeightKg)
+  unitPrice       Float        // Precio unitario ($)
+  totalAmount     Float        // Importe total ($)
+  rawMaterialId   String?
+  rawMaterial     RawMaterial? @relation(fields: [rawMaterialId], references: [id])
+  seasonality     String?      // ALTA, MEDIA, PICO_FIN_ANO, BAJA
+  status          String       @default("COMPLETADA")
+  createdAt       DateTime     @default(now())
+
+  @@index([saleDate])
+  @@index([productCode])
+  @@index([category])
+  @@index([rawMaterialId])
+}
+

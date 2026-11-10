@@ -19,7 +19,9 @@ import {
   Shield,
   ShieldCheck,
   Layers,
-  LogOut
+  LogOut,
+  BrainCircuit,
+  TrendingUp
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 
@@ -56,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'usuarios', label: '16. Usuarios y Permisos', icon: Users },
     { id: 'configuracion', label: '17. Configuración Fábrica', icon: Settings },
     { id: 'seguridad', label: '18. Módulo IA: Detección EPP', icon: ShieldCheck, badge: 'IA Live' },
+    { id: 'prediccion-demanda', label: '19. Módulo IA: Predicción Demanda', icon: TrendingUp, badge: 'IA ML' },
   ];
 
   return (
